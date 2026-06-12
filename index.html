@@ -1,56 +1,123 @@
 <!DOCTYPE html>
 <html lang="es">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Trivial App</title>
-        <link rel="stylesheet" href="style.css" />
-        <script src="script.js" defer></script>
-    </head>
-    <body>
-        <div class="trivial-container" id="trivial">
-            <div class="trivial-header">
-                <h2 id="question">Texto de la preguntat</h2>
-                <ul>
-                    <li>
-                        <input
-                            type="radio"
-                            id="a"
-                            name="answer"
-                            class="answer"
-                        />
-                        <label id="a_text" for="a">Pregunta</label>
-                    </li>
-                    <li>
-                        <input
-                            type="radio"
-                            id="b"
-                            name="answer"
-                            class="answer"
-                        />
-                        <label id="b_text" for="b">Pregunta</label>
-                    </li>
-                    <li>
-                        <input
-                            type="radio"
-                            id="c"
-                            name="answer"
-                            class="answer"
-                        />
-                        <label id="c_text" for="c">Pregunta</label>
-                    </li>
-                    <li>
-                        <input
-                            type="radio"
-                            id="d"
-                            name="answer"
-                            class="answer"
-                        />
-                        <label id="d_text" for="d">Pregunta</label>
-                    </li>
-                </ul>
-            </div>
-            <button id="submit">Enviar</button>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trivial del Día</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ===== HOME SCREEN ===== -->
+  <div id="screen-home" class="screen active">
+    <div class="home-card">
+      <div class="home-emoji">🧠</div>
+      <h1 class="home-title">Trivial del Día</h1>
+      <p class="home-subtitle">Un nuevo reto cada día</p>
+
+      <div class="home-buttons">
+        <button id="btn-daily" class="btn btn-primary">
+          <span class="btn-icon">📅</span> Jugar Hoy
+        </button>
+        <button id="btn-free" class="btn btn-secondary">
+          <span class="btn-icon">🔄</span> Modo Libre
+        </button>
+      </div>
+
+      <div id="home-stats" class="home-stats hidden">
+        <div class="stat">
+          <span class="stat-value" id="stat-played">0</span>
+          <span class="stat-label">Partidas</span>
         </div>
-    </body>
+        <div class="stat">
+          <span class="stat-value" id="stat-streak">0</span>
+          <span class="stat-label">Racha</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="stat-pct">0%</span>
+          <span class="stat-label">Acierto</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== GAME SCREEN ===== -->
+  <div id="screen-game" class="screen">
+    <div class="game-wrapper">
+      <div class="game-header">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="game-meta">
+          <span id="question-counter">1 / 10</span>
+          <span id="score-display">0 aciertos</span>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <span class="question-cat" id="question-cat">Geografía</span>
+        <h2 class="question-text" id="question-text">¿Cuál es la capital de España?</h2>
+      </div>
+
+      <div class="answers-grid" id="answers-grid">
+        <button class="answer-btn" data-idx="0"><span class="answer-letter">A</span><span class="answer-text">Sevilla</span></button>
+        <button class="answer-btn" data-idx="1"><span class="answer-letter">B</span><span class="answer-text">Barcelona</span></button>
+        <button class="answer-btn" data-idx="2"><span class="answer-letter">C</span><span class="answer-text">Madrid</span></button>
+        <button class="answer-btn" data-idx="3"><span class="answer-letter">D</span><span class="answer-text">Toledo</span></button>
+      </div>
+
+      <button id="btn-next" class="btn btn-primary btn-next hidden">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ===== RESULTS SCREEN ===== -->
+  <div id="screen-results" class="screen">
+    <div class="results-card">
+      <div class="results-emoji" id="results-emoji">🎉</div>
+      <h2 class="results-title" id="results-title">¡Genial!</h2>
+      <div class="results-score">
+        <span class="score-big" id="score-big">7</span>
+        <span class="score-total">/ 10</span>
+      </div>
+
+      <div id="share-result" class="share-result"></div>
+
+      <div class="results-stats">
+        <div class="stat">
+          <span class="stat-value" id="res-played">0</span>
+          <span class="stat-label">Partidas</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="res-streak">0</span>
+          <span class="stat-label">Racha</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="res-best">0</span>
+          <span class="stat-label">Mejor racha</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="res-pct">0%</span>
+          <span class="stat-label">% Global</span>
+        </div>
+      </div>
+
+      <div class="results-buttons">
+        <button id="btn-share" class="btn btn-accent">
+          <span class="btn-icon">📋</span> Compartir
+        </button>
+        <button id="btn-restart" class="btn btn-primary">
+          <span class="btn-icon">🔄</span> Jugar de nuevo
+        </button>
+        <button id="btn-home" class="btn btn-secondary">
+          Inicio
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
 </html>
