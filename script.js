@@ -38,6 +38,30 @@
   let isDaily = false;
   let answered = false;
 
+  // ===== TOAST FEEDBACK =====
+  let toastTimeout = null;
+
+  function showToast(message, type) {
+    const existing = document.querySelector(".feedback-toast");
+    if (existing) existing.remove();
+    if (toastTimeout) clearTimeout(toastTimeout);
+
+    const toast = document.createElement("div");
+    toast.className = "feedback-toast " + type;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => {
+      toast.classList.add("show");
+    });
+
+    toastTimeout = setTimeout(() => {
+      toast.classList.remove("show");
+      toast.classList.add("hide");
+      setTimeout(() => toast.remove(), 300);
+    }, 1500);
+  }
+
   // ===== UTILS =====
   function shuffle(arr) {
     const a = [...arr];
@@ -231,6 +255,13 @@
       if (i === q.c) btn.classList.add("correct");
       if (i === idx && !correct) btn.classList.add("wrong");
     });
+
+    if (correct) {
+      const msgs = ["¡Correcto!", "¡Bien!", "¡Exacto!", "¡Muy bien!", "¡Perfecto!"];
+      showToast(msgs[Math.floor(Math.random() * msgs.length)], "success");
+    } else {
+      showToast("¡Incorrecto!", "error");
+    }
 
     scoreDisplay.textContent = score + " aciertos";
     btnNext.classList.remove("hidden");
