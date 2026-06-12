@@ -1,0 +1,7 @@
+services:
+  trivial:
+    build: .
+    container_name: trivial
+    restart: unless-stopped
+    ports:
+      - "8082:80"
