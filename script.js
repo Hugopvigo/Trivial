@@ -1,85 +1,319 @@
-const trivialData = [
-    {
-        question: "¿Cuál es la capital de España?",
-        a: "Sevilla",
-        b: "Barcelona",
-        c: "Madrid",
-        d: "Toledo",
-        correct: "c",
-    },
-    {
-        question: "¿En qué continente está Andorra?",
-        a: "America",
-        b: "Europa",
-        c: "Africa",
-        d: "España",
-        correct: "b",
-    },
+(function () {
+  "use strict";
 
-];
+  const QUESTIONS_PER_GAME = 10;
+  const STATS_KEY = "trivial_stats";
+  const DAILY_KEY = "trivial_daily";
 
-const trivial = document.getElementById("trivial");
-const answerEls = document.querySelectorAll(".answer");
-const questionEl = document.getElementById("question");
-const a_text = document.getElementById("a_text");
-const b_text = document.getElementById("b_text");
-const c_text = document.getElementById("c_text");
-const d_text = document.getElementById("d_text");
-const submitBtn = document.getElementById("submit");
+  // ===== DOM =====
+  const $ = (sel) => document.querySelector(sel);
+  const screenHome = $("#screen-home");
+  const screenGame = $("#screen-game");
+  const screenResults = $("#screen-results");
 
-let currenttrivial = 0;
-let score = 0;
+  const btnDaily = $("#btn-daily");
+  const btnFree = $("#btn-free");
 
-loadtrivial();
+  const progressFill = $("#progress-fill");
+  const questionCounter = $("#question-counter");
+  const scoreDisplay = $("#score-display");
+  const questionCat = $("#question-cat");
+  const questionText = $("#question-text");
+  const answersGrid = $("#answers-grid");
+  const btnNext = $("#btn-next");
 
-function loadtrivial() {
-    deselectAnswers();
+  const resultsEmoji = $("#results-emoji");
+  const resultsTitle = $("#results-title");
+  const scoreBig = $("#score-big");
+  const shareResult = $("#share-result");
+  const btnShare = $("#btn-share");
+  const btnRestart = $("#btn-restart");
+  const btnHome = $("#btn-home");
 
-    const currenttrivialData = trivialData[currenttrivial];
+  // ===== STATE =====
+  let currentQuestions = [];
+  let currentIndex = 0;
+  let score = 0;
+  let results = [];
+  let isDaily = false;
+  let answered = false;
 
-    questionEl.innerText = currenttrivialData.question;
-    a_text.innerText = currenttrivialData.a;
-    b_text.innerText = currenttrivialData.b;
-    c_text.innerText = currenttrivialData.c;
-    d_text.innerText = currenttrivialData.d;
-}
-
-function getSelected() {
-    let answer = undefined;
-
-    answerEls.forEach((answerEl) => {
-        if (answerEl.checked) {
-            answer = answerEl.id;
-        }
-    });
-
-    return answer;
-}
-
-function deselectAnswers() {
-    answerEls.forEach((answerEl) => {
-        answerEl.checked = false;
-    });
-}
-
-submitBtn.addEventListener("click", () => {
-    // check to see the answer
-    const answer = getSelected();
-
-    if (answer) {
-        if (answer === trivialData[currenttrivial].correct) {
-            score++;
-        }
-
-        currenttrivial++;
-        if (currenttrivial < trivialData.length) {
-            loadtrivial();
-        } else {
-            trivial.innerHTML = `
-                <h2>Has acertado ${score}/${trivialData.length} preguntas correctas.</h2>
-                
-                <button onclick="location.reload()">Reiniciar</button>
-            `;
-        }
+  // ===== UTILS =====
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
     }
-});
+    return a;
+  }
+
+  function seededRandom(seed) {
+    let s = seed;
+    return function () {
+      s = (s * 16807 + 0) % 2147483647;
+      return (s - 1) / 2147483646;
+    };
+  }
+
+  function getDailySeed() {
+    const d = new Date();
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  }
+
+  function shuffleSeeded(arr, rng) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // ===== STATS =====
+  function loadStats() {
+    try {
+      return JSON.parse(localStorage.getItem(STATS_KEY)) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveStats(stats) {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  }
+
+  function getStats() {
+    return loadStats() || {
+      played: 0,
+      totalCorrect: 0,
+      totalQuestions: 0,
+      streak: 0,
+      bestStreak: 0,
+    };
+  }
+
+  function updateStats(correct, total) {
+    const stats = getStats();
+    stats.played++;
+    stats.totalCorrect += correct;
+    stats.totalQuestions += total;
+
+    if (correct >= Math.ceil(total * 0.6)) {
+      stats.streak++;
+      if (stats.streak > stats.bestStreak) {
+        stats.bestStreak = stats.streak;
+      }
+    } else {
+      stats.streak = 0;
+    }
+
+    saveStats(stats);
+    return stats;
+  }
+
+  function renderHomeStats() {
+    const stats = getStats();
+    if (stats.played === 0) {
+      $("#home-stats").classList.add("hidden");
+      return;
+    }
+    $("#home-stats").classList.remove("hidden");
+    $("#stat-played").textContent = stats.played;
+    $("#stat-streak").textContent = stats.streak;
+    const pct =
+      stats.totalQuestions > 0
+        ? Math.round((stats.totalCorrect / stats.totalQuestions) * 100)
+        : 0;
+    $("#stat-pct").textContent = pct + "%";
+  }
+
+  // ===== SCREENS =====
+  function showScreen(screen) {
+    [screenHome, screenGame, screenResults].forEach((s) =>
+      s.classList.remove("active")
+    );
+    screen.classList.add("active");
+  }
+
+  // ===== DAILY CHECK =====
+  function hasPlayedDaily() {
+    try {
+      const data = JSON.parse(localStorage.getItem(DAILY_KEY));
+      return data && data.seed === getDailySeed();
+    } catch {
+      return false;
+    }
+  }
+
+  function markDailyPlayed(score, total) {
+    localStorage.setItem(
+      DAILY_KEY,
+      JSON.stringify({ seed: getDailySeed(), score, total, date: new Date().toISOString() })
+    );
+  }
+
+  function getDailyResult() {
+    try {
+      return JSON.parse(localStorage.getItem(DAILY_KEY));
+    } catch {
+      return null;
+    }
+  }
+
+  // ===== GAME =====
+  function selectQuestions(daily) {
+    const rng = daily ? seededRandom(getDailySeed()) : Math.random;
+    let pool;
+
+    if (daily) {
+      pool = shuffleSeeded(QUESTIONS, rng);
+    } else {
+      pool = shuffle(QUESTIONS);
+    }
+
+    return pool.slice(0, QUESTIONS_PER_GAME);
+  }
+
+  function startGame(daily) {
+    isDaily = daily;
+
+    if (daily && hasPlayedDaily()) {
+      const prev = getDailyResult();
+      showResults(prev.score, prev.total, daily);
+      return;
+    }
+
+    currentQuestions = selectQuestions(daily);
+    currentIndex = 0;
+    score = 0;
+    results = [];
+    answered = false;
+
+    showScreen(screenGame);
+    loadQuestion();
+  }
+
+  function loadQuestion() {
+    answered = false;
+    const q = currentQuestions[currentIndex];
+
+    progressFill.style.width = ((currentIndex + 1) / QUESTIONS_PER_GAME) * 100 + "%";
+    questionCounter.textContent = (currentIndex + 1) + " / " + QUESTIONS_PER_GAME;
+    scoreDisplay.textContent = score + " aciertos";
+
+    questionCat.textContent = q.cat;
+    questionText.textContent = q.q;
+
+    const buttons = answersGrid.querySelectorAll(".answer-btn");
+    buttons.forEach((btn, i) => {
+      btn.className = "answer-btn";
+      btn.querySelector(".answer-text").textContent = q.a[i];
+      btn.dataset.idx = i;
+    });
+
+    btnNext.classList.add("hidden");
+  }
+
+  function selectAnswer(idx) {
+    if (answered) return;
+    answered = true;
+
+    const q = currentQuestions[currentIndex];
+    const correct = idx === q.c;
+    if (correct) score++;
+
+    results.push(correct);
+
+    const buttons = answersGrid.querySelectorAll(".answer-btn");
+    buttons.forEach((btn, i) => {
+      btn.classList.add("disabled");
+      if (i === q.c) btn.classList.add("correct");
+      if (i === idx && !correct) btn.classList.add("wrong");
+    });
+
+    scoreDisplay.textContent = score + " aciertos";
+    btnNext.classList.remove("hidden");
+
+    if (currentIndex === QUESTIONS_PER_GAME - 1) {
+      btnNext.textContent = "Ver resultados";
+    } else {
+      btnNext.textContent = "Siguiente →";
+    }
+  }
+
+  function nextQuestion() {
+    currentIndex++;
+    if (currentIndex >= QUESTIONS_PER_GAME) {
+      if (isDaily) markDailyPlayed(score, QUESTIONS_PER_GAME);
+      showResults(score, QUESTIONS_PER_GAME, isDaily);
+    } else {
+      loadQuestion();
+    }
+  }
+
+  function showResults(correct, total, daily) {
+    const pct = Math.round((correct / total) * 100);
+    const stats = daily ? updateStats(correct, total) : getStats();
+
+    let emoji, title;
+    if (pct >= 90) { emoji = "🏆"; title = "¡Increíble!"; }
+    else if (pct >= 70) { emoji = "🎉"; title = "¡Genial!"; }
+    else if (pct >= 50) { emoji = "😊"; title = "¡Bien!"; }
+    else if (pct >= 30) { emoji = "🤔"; title = "Puedes mejorar"; }
+    else { emoji = "😅"; title = "Sigue intentando"; }
+
+    resultsEmoji.textContent = emoji;
+    resultsTitle.textContent = title;
+    scoreBig.textContent = correct;
+
+    const resPct =
+      stats.totalQuestions > 0
+        ? Math.round((stats.totalCorrect / stats.totalQuestions) * 100)
+        : 0;
+
+    $("#res-played").textContent = stats.played;
+    $("#res-streak").textContent = stats.streak;
+    $("#res-best").textContent = stats.bestStreak;
+    $("#res-pct").textContent = resPct + "%";
+
+    const shareEmojis = results.map((r) => (r ? "🟩" : "🟥")).join("");
+    shareResult.textContent = shareEmojis;
+
+    showScreen(screenResults);
+  }
+
+  function copyShare() {
+    const shareEmojis = results.map((r) => (r ? "🟩" : "🟥")).join("");
+    const text = `Trivial del Día\n${shareEmojis}\n${score}/${QUESTIONS_PER_GAME}`;
+    navigator.clipboard.writeText(text).then(() => {
+      btnShare.textContent = "✅ Copiado";
+      setTimeout(() => {
+        btnShare.innerHTML = '<span class="btn-icon">📋</span> Compartir';
+      }, 2000);
+    });
+  }
+
+  // ===== INIT =====
+  function init() {
+    renderHomeStats();
+
+    btnDaily.addEventListener("click", () => startGame(true));
+    btnFree.addEventListener("click", () => startGame(false));
+
+    answersGrid.addEventListener("click", (e) => {
+      const btn = e.target.closest(".answer-btn");
+      if (btn) selectAnswer(parseInt(btn.dataset.idx));
+    });
+
+    btnNext.addEventListener("click", nextQuestion);
+    btnShare.addEventListener("click", copyShare);
+    btnRestart.addEventListener("click", () => startGame(isDaily));
+    btnHome.addEventListener("click", () => {
+      renderHomeStats();
+      showScreen(screenHome);
+    });
+  }
+
+  init();
+})();
