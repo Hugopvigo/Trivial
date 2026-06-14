@@ -50,6 +50,7 @@ body {
   display: none;
   min-height: 100vh;
   padding: 1rem;
+  padding-bottom: 4rem;
   align-items: center;
   justify-content: center;
 }
@@ -520,5 +521,14 @@ body {
   .results-stats {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
+  }
+
+  .screen {
+    padding-bottom: 5rem;
+  }
+
+  .footer {
+    padding: 1rem 1rem;
+    font-size: 0.7rem;
   }
 }
