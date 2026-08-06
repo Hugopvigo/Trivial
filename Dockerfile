@@ -7,5 +7,6 @@ COPY style.css  /usr/share/nginx/html/
 COPY script.js  /usr/share/nginx/html/
 COPY data.js    /usr/share/nginx/html/
 COPY robots.txt /usr/share/nginx/html/
+COPY sitemap.xml /usr/share/nginx/html/
 
 EXPOSE 80

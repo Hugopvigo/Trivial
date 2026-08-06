@@ -1,2 +1,3 @@
 User-agent: *
 Allow: /
+Sitemap: https://trivial.hugoperezvigo.es/sitemap.xml
