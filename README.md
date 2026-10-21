@@ -1,3 +1,7 @@
+<meta property="og:title" content="TRIVIAL">
+<meta property="og:description" content="Un trivial diario de cultura general en español, con 686 preguntas y nueve categorías.">
+<meta property="og:image" content="https://raw.githubusercontent.com/Hugopvigo/Trivial/main/docs/capturas/og.png">
+
 <p align="center">
   <img src="docs/capturas/00-cabecera.png" alt="Trivial del Día — reto diario de cultura general" width="100%">
 </p>
