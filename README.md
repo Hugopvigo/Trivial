@@ -40,6 +40,12 @@ servidor: diez preguntas, cuatro opciones y un marcador al final.
 ![portada del trivial](docs/capturas/01-web.png)
 *La portada: **Jugar Hoy** para la partida del día y **Modo Libre** para practicar.*
 
+<p align="center">
+  <img src="docs/capturas/02-demo.gif" alt="Una partida del Trivial: se elige modo libre, se responde y la app corrige" width="520">
+</p>
+
+<p align="center"><sub>Una partida en modo libre: se contesta, la app corrige y pasa a la siguiente. Es el juego de verdad, en su web.</sub></p>
+
 ## Las preguntas
 
 **686 preguntas** repartidas en **9 categorías**:
